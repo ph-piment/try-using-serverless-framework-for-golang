@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-
+	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-lambda-go/lambdacontext"
+	"time"
 )
 
 // Response is of type APIGatewayProxyResponse since we're leveraging the
@@ -19,8 +21,14 @@ type Response events.APIGatewayProxyResponse
 func Handler(ctx context.Context) (Response, error) {
 	var buf bytes.Buffer
 
+	var awsRequestID string
+	if lc, ok := lambdacontext.FromContext(ctx); ok {
+		awsRequestID = lc.AwsRequestID
+	} else {
+		return Response{StatusCode: 404}, fmt.Errorf("can not get AwsRequestID.")
+	}
 	body, err := json.Marshal(map[string]interface{}{
-		"message": "Go Serverless v1.0! Your function executed successfully!",
+		"message": "AwsRequestID:" + awsRequestID,
 	})
 	if err != nil {
 		return Response{StatusCode: 404}, err
@@ -37,6 +45,7 @@ func Handler(ctx context.Context) (Response, error) {
 		},
 	}
 
+	time.Sleep(time.Second * 5)
 	return resp, nil
 }
 
